@@ -97,6 +97,7 @@ class FileHelpEntry:
     help_category: str
     entrytext: str
     lock_storage: str
+    more_enabled: bool
 
     @property
     def search_index_entry(self):
@@ -227,10 +228,11 @@ class FileHelpStorageHandler:
 
         for dct in loaded_help_dicts:
             key = dct.get("key").lower().strip()
-            category = dct.get("category", _DEFAULT_HELP_CATEGORY).lower().strip()
+            category = dct.get ("category", _DEFAULT_HELP_CATEGORY).lower().strip()
             aliases = list(dct.get("aliases", []))
             entrytext = dct.get("text", "")
             locks = dct.get("locks", "")
+            more_enabled = dct.get("more_enabled", True)
 
             if not key and entrytext:
                 logger.error(f"Cannot load file-help-entry (missing key or text): {dct}")
@@ -242,6 +244,7 @@ class FileHelpStorageHandler:
                 aliases=aliases,
                 lock_storage=locks,
                 entrytext=entrytext,
+                more_enabled=more_enabled, 
             )
 
         self.help_entries_dict = unique_help_entries

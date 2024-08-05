@@ -31,7 +31,7 @@ _LUNR_GET_BUILDER = None
 _LUNR_BUILDER_PIPELINE = None
 
 _RE_HELP_SUBTOPICS_START = re.compile(r"^\s*?#\s*?subtopics\s*?$", re.I + re.M)
-_RE_HELP_SUBTOPIC_SPLIT = re.compile(r"^\s*?(\#{2,6}\s*?\w+?[a-z0-9 \-\?!,\.]*?)$", re.M + re.I)
+_RE_HELP_SUBTOPIC_SPLIT = re.compile(r"^\s*?(\#{2,6}\s*?\w+?[a-z0-9 \-\?!,\.]*?(?:\(\s*?\w+:\s*(?:true|false)\s*?\))?)$", re.M + re.I)
 _RE_HELP_SUBTOPIC_PARSE = re.compile(r"^(?P<nesting>\#{2,6})\s*?(?P<name>.*?)$", re.I + re.M)
 
 MAX_SUBTOPIC_NESTING = 5
@@ -114,6 +114,33 @@ def help_search_with_index(query, candidate_entries, suggestion_maxnum=5, fields
     )
 
 
+def parse_settings(input_str):
+    # Regex to match the function name and the parameters inside parentheses
+    pattern = r'(\w+)\((.*?)\)'
+    match = re.match(pattern, input_str)
+
+    if match:
+        function_name = match.group(1)
+        params_str = match.group(2)
+
+        # Split parameters by commas and process each key-value pair
+        params = {}
+        if params_str:
+            for param in params_str.split(','):
+                key, value = param.split(':')
+                # Convert the string representation of boolean to a Python boolean
+                if value.lower() == 'true':
+                    value = True
+                elif value.lower() == 'false':
+                    value = False
+                params[key.strip()] = value
+        
+        return function_name, params
+    else:
+        # No parentheses in the string, return the function name with an empty dictionary
+        return input_str, {}
+    
+
 def parse_entry_for_subcategories(entry):
     """
     Parse a command docstring for special sub-category blocks:
@@ -185,7 +212,7 @@ def parse_entry_for_subcategories(entry):
         subtopics = subtopics[0]
     else:
         return structure
-
+    
     keypath = []
     current_nesting = 0
     subtopic = None
@@ -197,6 +224,8 @@ def parse_entry_for_subcategories(entry):
             # a new sub(-sub..) category starts.
             mdict = subtopic_match.groupdict()
             subtopic = mdict["name"].lower().strip()
+            #subtopic, subtopic_settings = parse_settings(subtopic)
+            
             new_nesting = len(mdict["nesting"]) - 1
 
             if new_nesting > MAX_SUBTOPIC_NESTING:
@@ -218,17 +247,19 @@ def parse_entry_for_subcategories(entry):
                     keypath.pop()
                 except IndexError:
                     pass
-            keypath.append(subtopic)
+            keypath.append(subtopic)       
             current_nesting = new_nesting
-        else:
+        else:        
             # an entry belonging to a subtopic - find the nested location
             dct = structure
             if not keypath and subtopic is not None:
                 structure[subtopic] = part
             else:
                 for key in keypath:
-                    if key in dct:
-                        dct = dct[key]
+                    help_key, help_settings = parse_settings(key)
+                    
+                    if help_key in dct:
+                        dct = dct[help_key]
                     else:
-                        dct[key] = {None: part}
+                        dct[help_key] = {None: part, "__settings__": help_settings}
     return structure

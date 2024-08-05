@@ -13,6 +13,7 @@ from dataclasses import dataclass
 from itertools import chain
 
 from django.conf import settings
+from django.utils.translation import gettext as _, pgettext as p_
 
 from evennia.help.filehelp import FILE_HELP_ENTRIES
 from evennia.help.models import HelpEntry
@@ -109,16 +110,15 @@ class CmdHelp(COMMAND_DEFAULT_CLASS):
     # should topics disply their help entry when clicked
     clickable_topics = HELP_CLICKABLE_TOPICS
 
-    def msg_help(self, text, **kwargs):
+    def msg_help(self, text, more_override=None, **kwargs):
         """
         messages text to the caller, adding an extra oob argument to indicate
         that this is a help command result and could be rendered in a separate
         help window.
 
         """
-        if type(self).help_more:
-            usemore = True
-
+        usemore = more_override if more_override is not None else type(self).help_more
+        if usemore:
             if self.session and self.session.protocol_key in (
                 "webclient/websocket",
                 "webclient/ajax",
@@ -147,7 +147,7 @@ class CmdHelp(COMMAND_DEFAULT_CLASS):
         aliases=None,
         suggested=None,
         subtopics=None,
-        click_topics=True,
+        click_topics=True, 
     ):
         """This visually formats the help entry.
         This method can be overridden to customize the way a help
@@ -161,6 +161,8 @@ class CmdHelp(COMMAND_DEFAULT_CLASS):
             subtopics (list, optional): A list of strings - the subcategories available
                 for this entry.
             click_topics (bool, optional): Should help topics be clickable. Default is True.
+            more_enabled (bool, optional): This allows help entry to override the
+                HELP_MORE_ENABLED from settings.
 
         Returns:
             help_message (str): Help entry formated for console.
@@ -169,10 +171,10 @@ class CmdHelp(COMMAND_DEFAULT_CLASS):
         separator = "|C" + "-" * self.client_width() + "|n"
         start = f"{separator}\n"
 
-        title = f"|CHelp for |w{topic}|n" if topic else "|rNo help found|n"
+        title = _("|CHelp for |w{topic}|n").format(topic=topic) if topic else _("|rNo help found|n")
 
         if aliases:
-            aliases = " |C(aliases: {}|C)|n".format("|C,|n ".join(f"|w{ali}|n" for ali in aliases))
+            aliases = _(" |C(aliases: {}|C)|n").format("|C,|n ".join(f"|w{ali}|n" for ali in aliases))
         else:
             aliases = ""
 
@@ -185,7 +187,7 @@ class CmdHelp(COMMAND_DEFAULT_CLASS):
                 ]
             else:
                 subtopics = [f"|w{topic}/{subtop}|n" for subtop in subtopics]
-            subtopics = "\n|CSubtopics:|n\n  {}".format(
+            subtopics = _("\n|CSubtopics:|n\n  {}").format(
                 "\n  ".join(
                     format_grid(
                         subtopics, width=self.client_width(), line_prefix=self.index_topic_clr
@@ -201,7 +203,7 @@ class CmdHelp(COMMAND_DEFAULT_CLASS):
                 suggested = [f"|lchelp {sug}|lt|w{sug}|n|le" for sug in suggested]
             else:
                 suggested = [f"|w{sug}|n" for sug in suggested]
-            suggested = "\n|COther topic suggestions:|n\n{}".format(
+            suggested = _("\n|COther topic suggestions:|n\n{}").format(
                 "\n  ".join(
                     format_grid(
                         suggested, width=self.client_width(), line_prefix=self.index_topic_clr
@@ -296,7 +298,7 @@ class CmdHelp(COMMAND_DEFAULT_CLASS):
             # get the command-help entries by-category
             sep1 = (
                 self.index_type_separator_clr
-                + pad("Commands", width=width, fillchar="-")
+                + pad(_("Commands"), width=width, fillchar="-")
                 + self.index_topic_clr
             )
             grid, verbatim_elements = _group_by_category(cmd_help_dict)
@@ -313,7 +315,7 @@ class CmdHelp(COMMAND_DEFAULT_CLASS):
             # get db-based help entries by-category
             sep2 = (
                 self.index_type_separator_clr
-                + pad("Game & World", width=width, fillchar="-")
+                + pad(_("Game & World"), width=width, fillchar="-")
                 + self.index_topic_clr
             )
             grid, verbatim_elements = _group_by_category(db_help_dict)
@@ -613,7 +615,7 @@ class CmdHelp(COMMAND_DEFAULT_CLASS):
 
         if not match:
             # no topic matches found. Only give suggestions.
-            help_text = f"There is no help topic matching '{query}'."
+            help_text = _("There is no help topic matching '{query}'.").format(query=query)
 
             if not suggestions:
                 # we don't even have a good suggestion. Run a second search,
@@ -625,7 +627,7 @@ class CmdHelp(COMMAND_DEFAULT_CLASS):
                 ]
 
                 for match_query in [query, f"{query}*", f"*{query}"]:
-                    _, suggestions = help_search_with_index(
+                    __, suggestions = help_search_with_index(
                         match_query,
                         entries,
                         suggestion_maxnum=self.suggestion_maxnum,
@@ -633,8 +635,8 @@ class CmdHelp(COMMAND_DEFAULT_CLASS):
                     )
                     if suggestions:
                         help_text += (
-                            "\n... But matches were found within the help "
-                            "texts of the suggestions below."
+                            _("\n... But matches were found within the help "
+                            "texts of the suggestions below.")
                         )
                         suggestions = [
                             self.strip_cmd_prefix(sugg, key_and_aliases) for sugg in suggestions
@@ -671,7 +673,8 @@ class CmdHelp(COMMAND_DEFAULT_CLASS):
             )
             self.msg_help(output)
             return
-
+        
+        more_enabled = HELP_MORE_ENABLED
         if inherits_from(match, "evennia.commands.command.Command"):
             # a command match
             topic = match.key
@@ -682,6 +685,7 @@ class CmdHelp(COMMAND_DEFAULT_CLASS):
             # a database (or file-help) match
             topic = match.key
             help_text = match.entrytext
+            more_enabled = match.more_enabled
             aliases = match.aliases if isinstance(match.aliases, list) else match.aliases.all()
             suggested = suggestions[1:]
 
@@ -720,7 +724,7 @@ class CmdHelp(COMMAND_DEFAULT_CLASS):
                         checked_topic = topic + f"/{subtopic_query}"
                         output = self.format_help_entry(
                             topic=topic,
-                            help_text=f"No help entry found for '{checked_topic}'",
+                            help_text=_("No help entry found for '{checked_topic}'").format(checked_topic=checked_topic),
                             subtopics=subtopic_index,
                             click_topics=clickable_topics,
                         )
@@ -730,12 +734,15 @@ class CmdHelp(COMMAND_DEFAULT_CLASS):
                 # if we get here we have an exact or fuzzy match
 
                 subtopic_map = subtopic_map.pop(subtopic_query)
-                subtopic_index = [subtopic for subtopic in subtopic_map if subtopic is not None]
+                subtopic_index = [subtopic for subtopic in subtopic_map if subtopic is not None and subtopic != "__settings__"]
                 # keep stepping down into the tree, append path to show position
                 topic = topic + f"/{subtopic_query}"
 
             # we reached the bottom of the topic tree
             help_text = subtopic_map[None]
+            
+            if "more_enabled" in subtopic_map["__settings__"]:
+                more_enabled = subtopic_map["__settings__"]["more_enabled"]
 
         topic = self.strip_cmd_prefix(topic, key_and_aliases)
         if subtopics:
@@ -752,8 +759,11 @@ class CmdHelp(COMMAND_DEFAULT_CLASS):
             suggested=suggested,
             click_topics=clickable_topics,
         )
-
-        self.msg_help(output)
+                
+        if more_enabled != HELP_MORE_ENABLED:
+            self.msg_help(output, more_override=more_enabled)
+        else:
+            self.msg_help(output)
 
 
 def _loadhelp(caller):
@@ -766,13 +776,13 @@ def _loadhelp(caller):
 
 def _savehelp(caller, buffer):
     entry = caller.db._editing_help
-    caller.msg("Saved help entry.")
+    caller.msg(_("Saved help entry."))
     if entry:
         entry.entrytext = buffer
 
 
 def _quithelp(caller):
-    caller.msg("Closing the editor.")
+    caller.msg(_("Closing the editor."))
     del caller.db._editing_help
 
 

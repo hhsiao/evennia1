@@ -21,6 +21,7 @@ import textwrap
 import threading
 import traceback
 import types
+import unicodedata
 from ast import literal_eval
 from collections import OrderedDict, defaultdict
 from inspect import getmembers, getmodule, getmro, ismodule, trace
@@ -140,6 +141,7 @@ def pad(text, width=None, align="c", fillchar=" "):
 
     """
     width = width if width else settings.CLIENT_DEFAULT_WIDTH
+    width -= (display_len(text) - len(text))
     align = align if align in ("c", "l", "r") else "c"
     fillchar = fillchar[0] if fillchar else " "
     if align == "l":
@@ -290,8 +292,8 @@ def justify(text, width=None, align="l", indent=0, fillchar=" "):
         # absolute mode - just crop or fill to width
         abs_lines = []
         for line in text.split("\n"):
-            nlen = m_len(line)
-            if m_len(line) < width:
+            nlen = m_len(line, True)
+            if m_len(line, True) < width:
                 line += sp * (width - nlen)
             else:
                 line = crop(line, width=width, suffix="")
@@ -306,7 +308,7 @@ def justify(text, width=None, align="l", indent=0, fillchar=" "):
     for ip, paragraph in enumerate(paragraphs):
         if ip > 0:
             words.append(("\n", 0))
-        words.extend((word, m_len(word)) for word in paragraph.split())
+        words.extend((word, m_len(word, True)) for word in paragraph.split())
 
     if not words:
         # Just whitespace!
@@ -453,27 +455,28 @@ def iter_to_str(iterable, sep=",", endsep=", and", addquote=False):
         if endsep.startswith(sep) and endsep != sep:
             # oxford comma alternative
             endsep = endsep[1:] if len_iter < 3 else endsep
-        elif endsep[0] not in punctuation:
+        elif not unicodedata.category(endsep[0]).startswith("P"):
             # add a leading space if endsep is a word
             endsep = " " + str(endsep).strip()
 
     # also add a leading space if separator is a word
-    if sep not in punctuation:
+    ansi_stripped_sep = evennia.utils.ansi.strip_ansi(sep).strip()
+    if display_len(ansi_stripped_sep) > 1 and not unicodedata.category(ansi_stripped_sep).startswith("P"):
         sep = " " + sep
 
     if len_iter == 1:
         return str(iterable[0])
     elif len_iter == 2:
-        return f"{endsep} ".join(str(v) for v in iterable)
+        return f"{endsep}".join(str(v) for v in iterable)
     else:
-        return f"{sep} ".join(str(v) for v in iterable[:-1]) + f"{endsep} {iterable[-1]}"
+        return f"{sep}".join(str(v) for v in iterable[:-1]) + f"{endsep} {iterable[-1]}"
 
 
 # legacy aliases
 list_to_string = iter_to_str
 iter_to_string = iter_to_str
 
-re_empty = re.compile("\n\s*\n")
+re_empty = re.compile("\n\\s*\n")
 
 
 def compress_whitespace(text, max_linebreaks=1, max_spacing=2):
@@ -494,7 +497,7 @@ def compress_whitespace(text, max_linebreaks=1, max_spacing=2):
     # this allows the blank-line compression to eliminate them if needed
     text = re_empty.sub("\n\n", text)
     # replace groups of extra spaces with the maximum number of spaces
-    text = re.sub(f"(?<=\S) {{{max_spacing},}}", " " * max_spacing, text)
+    text = re.sub(fr"(?<=\S) {{{max_spacing},}}", " " * max_spacing, text)
     # replace groups of extra newlines with the maximum number of newlines
     text = re.sub(f"\n{{{max_linebreaks},}}", "\n" * max_linebreaks, text)
     return text
@@ -2299,7 +2302,7 @@ def calledby(callerdepth=1):
     return "\n".join(out[::-1])
 
 
-def m_len(target):
+def m_len(target, use_display_len=False):
     """
     Provides length checking for strings with MXP patterns, and falls
     back to normal len for other objects.
@@ -2316,8 +2319,8 @@ def m_len(target):
     from evennia.utils.ansi import ANSI_PARSER
 
     if inherits_from(target, str) and "|lt" in target:
-        return len(ANSI_PARSER.strip_mxp(target))
-    return len(target)
+        return display_len(ANSI_PARSER.strip_mxp(target)) if use_display_len else len(ANSI_PARSER.strip_mxp(target))
+    return display_len(target) if use_display_len else len(target)
 
 
 def display_len(target):

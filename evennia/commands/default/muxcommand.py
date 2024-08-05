@@ -5,6 +5,7 @@ is also an Account/OOC version that makes sure caller is an Account object.
 
 from evennia.commands.command import Command
 from evennia.utils import utils
+from django.utils.translation import gettext as _
 
 # limit symbol import for API
 __all__ = ("MuxCommand", "MuxAccountCommand")
@@ -145,13 +146,13 @@ class MuxCommand(Command):
                         unused_switches.append(element)  # or an extraneous option to be ignored.
                 if extra_switches:  # User provided switches
                     self.msg(
-                        "|g%s|n: |wAmbiguous switch supplied: Did you mean /|C%s|w?"
-                        % (self.cmdstring, " |nor /|C".join(extra_switches))
+                        _("|g%s|n: |wAmbiguous switch supplied: Did you mean /|C%s|w?")
+                        % (self.cmdstring, _(" |nor /|C").join(extra_switches))
                     )
                 if unused_switches:
                     plural = "" if len(unused_switches) == 1 else "es"
                     self.msg(
-                        '|g%s|n: |wExtra switch%s "/|C%s|w" ignored.'
+                        _('|g%s|n: |wExtra switch%s "/|C%s|w" ignored.')
                         % (self.cmdstring, plural, "|n, /|C".join(unused_switches))
                     )
                 switches = valid_switches  # Only include valid_switches in command function call
@@ -209,14 +210,14 @@ class MuxCommand(Command):
         variables = "\n".join(
             " |w{}|n ({}): {}".format(key, type(val), val) for key, val in self.__dict__.items()
         )
-        string = f"""
+        string = _("""
 Command {self} has no defined `func()` - showing on-command variables: No child func() defined for {self} - available variables:
 {variables}
-        """
+        """).format(variables=variables, self=self)
         self.msg(string)
         # a simple test command to show the available properties
         string = "-" * 50
-        string += f"\n|w{self.key}|n - Command variables from evennia:\n"
+        string += _("\n|w{self.key}|n - Command variables from evennia:\n").format(self=self)
         string += "-" * 50
         string += f"\nname of cmd (self.key): |w{self.key}|n\n"
         string += f"cmd aliases (self.aliases): |w{self.aliases}|n\n"
@@ -228,7 +229,7 @@ Command {self} has no defined `func()` - showing on-command variables: No child 
         # show cmdset.key instead of cmdset to shorten output
         string += utils.fill(f"current cmdset (self.cmdset): |w{self.cmdset}|n\n")
         string += "\n" + "-" * 50
-        string += "\nVariables from MuxCommand baseclass\n"
+        string += _("\nVariables from MuxCommand baseclass\n")
         string += "-" * 50
         string += f"\nraw argument (self.raw): |w{self.raw}|n \n"
         string += f"cmd args (self.args): |w{self.args}|n\n"

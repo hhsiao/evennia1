@@ -478,6 +478,7 @@ class CmdSetHandler(object):
             else:
                 self.cmdset_stack.append(cmdset)
             self.update()
+        return cmdset
 
     def add_default(self, cmdset, emit_to_obj=None, persistent=True, **kwargs):
         """

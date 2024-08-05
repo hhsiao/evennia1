@@ -8,6 +8,7 @@ entities.
 
 import time
 import typing
+import types
 from collections import defaultdict
 
 import inflect
@@ -49,7 +50,6 @@ _SESSID_MAX = 16 if _MULTISESSION_MODE in (1, 3) else 1
 
 # init the actor-stance funcparser for msg_contents
 _MSG_CONTENTS_PARSER = funcparser.FuncParser(funcparser.ACTOR_STANCE_CALLABLES)
-
 
 class ObjectSessionHandler:
     """
@@ -700,6 +700,7 @@ class DefaultObject(ObjectDB, metaclass=TypeclassBase):
             the user), this should return `None`.
 
         """
+        
         if kwargs.get("quiet"):
             # don't care about no/multi-match errors, just return list of whatever we have
             return list(results)
@@ -870,7 +871,7 @@ class DefaultObject(ObjectDB, metaclass=TypeclassBase):
         if is_stacked:
             # we have a stacked result, return it immediately (a list)
             return results
-
+        
         # handle the end (unstacked) results, returning a single object, a list or None
         return self.handle_search_results(searchdata, results, **input_kwargs)
 
@@ -1366,13 +1367,13 @@ class DefaultObject(ObjectDB, metaclass=TypeclassBase):
 
             if obj.has_account:
                 if home:
-                    string = "Your current location has ceased to exist,"
-                    string += " moving you to (#{dbid})."
-                    obj.msg(_(string).format(dbid=home.dbid))
+                    string = (_("Your current location has ceased to exist,"
+                              " moving you to (#{dbid})."))
+                    obj.msg(string.format(dbid=home.dbid))
                 else:
                     # Famous last words: The account should never see this.
-                    string = "This place should not exist ... contact an admin."
-                    obj.msg(_(string))
+                    string = _("This place should not exist ... contact an admin.")
+                    obj.msg(string)
             obj.move_to(home, move_type="teleport")
 
     @classmethod
@@ -1742,7 +1743,7 @@ class DefaultObject(ObjectDB, metaclass=TypeclassBase):
             str: The desc display string.
 
         """
-        return self.db.desc or "You see nothing special."
+        return self.db.desc or _("You see nothing special.")
 
     def get_display_exits(self, looker, **kwargs):
         """
@@ -1781,7 +1782,7 @@ class DefaultObject(ObjectDB, metaclass=TypeclassBase):
         exit_names = (exi.get_display_name(looker, **kwargs) for exi in exits)
         exit_names = iter_to_str(_sort_exit_names(exit_names))
 
-        return f"|wExits:|n {exit_names}" if exit_names else ""
+        return _("|wExits:|n {exit_names}").format(exit_names=exit_names) if exit_names else ""
 
     def get_display_characters(self, looker, **kwargs):
         """
@@ -1801,7 +1802,7 @@ class DefaultObject(ObjectDB, metaclass=TypeclassBase):
             char.get_display_name(looker, **kwargs) for char in characters
         )
 
-        return f"|wCharacters:|n {character_names}" if character_names else ""
+        return _("|wCharacters:|n {character_names}").format(character_names=character_names) if character_names else ""
 
     def get_display_things(self, looker, **kwargs):
         """
@@ -1828,7 +1829,7 @@ class DefaultObject(ObjectDB, metaclass=TypeclassBase):
             singular, plural = thing.get_numbered_name(nthings, looker, key=thingname)
             thing_names.append(singular if nthings == 1 else plural)
         thing_names = iter_to_str(thing_names)
-        return f"|wYou see:|n {thing_names}" if thing_names else ""
+        return _("|wYou see:|n {thing_names}").format(thing_names=thing_names) if thing_names else ""
 
     def get_display_footer(self, looker, **kwargs):
         """
@@ -2105,7 +2106,7 @@ class DefaultObject(ObjectDB, metaclass=TypeclassBase):
             puppeting this Object.
 
         """
-        self.msg(f"You become |w{self.key}|n.")
+        self.msg(_("You become |w{self.key}|n.").format(self=self))
         self.account.db._last_puppet = self
 
     def at_pre_unpuppet(self, **kwargs):
@@ -2874,15 +2875,15 @@ class DefaultObject(ObjectDB, metaclass=TypeclassBase):
             # whisper mode
             msg_type = "whisper"
             msg_self = (
-                '{self} whisper to {all_receivers}, "|n{speech}|n"'
+                _('{self} whisper to {all_receivers}, "|n{speech}|n"')
                 if msg_self is True
                 else msg_self
             )
-            msg_receivers = msg_receivers or '{object} whispers: "|n{speech}|n"'
+            msg_receivers = msg_receivers or _('{object} whispers: "|n{speech}|n"')
             msg_location = None
         else:
-            msg_self = '{self} say, "|n{speech}|n"' if msg_self is True else msg_self
-            msg_location = msg_location or '{object} says, "{speech}"'
+            msg_self = _('{self} say, "|n{speech}|n"') if msg_self is True else msg_self
+            msg_location = msg_location or _('{object} says, "{speech}"')
             msg_receivers = msg_receivers or message
 
         custom_mapping = kwargs.get("mapping", {})
@@ -2891,7 +2892,7 @@ class DefaultObject(ObjectDB, metaclass=TypeclassBase):
 
         if msg_self:
             self_mapping = {
-                "self": "You",
+                "self": _("You"),
                 "object": self.get_display_name(self),
                 "location": location.get_display_name(self) if location else None,
                 "receiver": None,
@@ -2907,7 +2908,7 @@ class DefaultObject(ObjectDB, metaclass=TypeclassBase):
 
         if receivers and msg_receivers:
             receiver_mapping = {
-                "self": "You",
+                "self": _("You"),
                 "object": None,
                 "location": None,
                 "receiver": None,
@@ -2934,7 +2935,7 @@ class DefaultObject(ObjectDB, metaclass=TypeclassBase):
 
         if self.location and msg_location:
             location_mapping = {
-                "self": "You",
+                "self": _("You"),
                 "object": self,
                 "location": location,
                 "all_receivers": ", ".join(str(recv) for recv in receivers) if receivers else None,
@@ -3143,7 +3144,7 @@ class DefaultCharacter(DefaultObject):
 
         """
         if account and cls.objects.filter_family(db_key__iexact=name):
-            return f"|rA character named '|w{name}|r' already exists.|n"
+            return _("|rA character named '|w{name}|r' already exists.|n").format(name=name)
 
     def basetype_setup(self):
         """
