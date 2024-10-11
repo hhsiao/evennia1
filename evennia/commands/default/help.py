@@ -147,7 +147,7 @@ class CmdHelp(COMMAND_DEFAULT_CLASS):
         aliases=None,
         suggested=None,
         subtopics=None,
-        click_topics=True, 
+        click_topics=True,
     ):
         """This visually formats the help entry.
         This method can be overridden to customize the way a help
@@ -673,21 +673,21 @@ class CmdHelp(COMMAND_DEFAULT_CLASS):
             )
             self.msg_help(output)
             return
-        
+
         more_enabled = HELP_MORE_ENABLED
         if inherits_from(match, "evennia.commands.command.Command"):
             # a command match
             topic = match.key
             help_text = match.get_help(caller, cmdset)
             aliases = match.aliases
-            suggested = suggestions[1:]
+            suggested = match.suggestions if hasattr(match, "suggestions") else suggestions[1:]
         else:
             # a database (or file-help) match
             topic = match.key
             help_text = match.entrytext
             more_enabled = match.more_enabled
             aliases = match.aliases if isinstance(match.aliases, list) else match.aliases.all()
-            suggested = suggestions[1:]
+            suggested = match.suggestions if hasattr(match, "suggestions") else suggestions[1:]
 
         # parse for subtopics. The subtopic_map is a dict with the current topic/subtopic
         # text is stored under a `None` key and all other keys are subtopic titles pointing
@@ -740,7 +740,7 @@ class CmdHelp(COMMAND_DEFAULT_CLASS):
 
             # we reached the bottom of the topic tree
             help_text = subtopic_map[None]
-            
+
             if "more_enabled" in subtopic_map["__settings__"]:
                 more_enabled = subtopic_map["__settings__"]["more_enabled"]
 
@@ -759,7 +759,7 @@ class CmdHelp(COMMAND_DEFAULT_CLASS):
             suggested=suggested,
             click_topics=clickable_topics,
         )
-                
+
         if more_enabled != HELP_MORE_ENABLED:
             self.msg_help(output, more_override=more_enabled)
         else:

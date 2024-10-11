@@ -638,7 +638,7 @@ class CmdChannel(COMMAND_DEFAULT_CLASS):
             channel.msg(_("{target.key} was booted from channel by {self.caller.key}.{reason}").format(target=target, self=self, reason=reason))
 
         logger.log_sec(
-            _("Channel Boot: {target} (Channel: {channel}, Reason: {reason.strip()}, Caller: {self.caller}").format(target=target, channel=channel, reason=reason, self=self)
+            f"Channel Boot: {target} (Channel: {channel}, Reason: {reason.strip()}, Caller: {self.caller}"
         )
         return True, ""
 
@@ -1164,7 +1164,7 @@ class CmdChannel(COMMAND_DEFAULT_CLASS):
 
             channames = ", ".join(chan.key for chan in channels)
             reasonwarn = _(". Also note that your reason will be echoed to the channel") if reason else ""
-                
+
             ask_yes_no(
                 caller,
                 prompt=_("Are you sure you want to boot user {target.key} from channel(s) {channames} (make sure name/channels are correct{reasonwarn}). {{options}}?").format(target=target, channames=channames, reasonwarn=reasonwarn),
@@ -1220,7 +1220,7 @@ class CmdChannel(COMMAND_DEFAULT_CLASS):
 
             channames = ", ".join(chan.key for chan in channels)
             reasonwarn = _(". Also note that your reason will be echoed to the channel") if reason else ""
-            
+
             ask_yes_no(
                 caller,
                 _("Are you sure you want to ban user {target.key} from channel(s) {channames} (make sure name/channels are correct{reasonwarn}) {{options}}?").format(target=target, channames=channames, reasonwarn=reasonwarn),
@@ -2034,9 +2034,11 @@ class CmdDiscord2Chan(COMMAND_DEFAULT_CLASS):
                     ev_chan, dc_chan = discord_bot.db.channels.pop(lid)
                     dc_chan_names = discord_bot.attributes.get("discord_channels", {})
                     dc_info = dc_chan_names.get(dc_chan, {"name": "unknown", "guild": "unknown"})
+                    dc_info_name = dc_info.get('name','?')
+                    dc_info_guild = dc_info.get('guild','?')
                     self.msg(
                         _("Removed link between {ev_chan} and"
-                        " #{dc_info.get('name','?')}@{dc_info.get('guild','?')}").format(dc_info=dc_info, ev_chan=ev_chan)
+                        " #{dc_info_name}@{dc_info_guild}").format(dc_info_name=dc_info_name, dc_info_guild=dc_info_guild, ev_chan=ev_chan)
                     )
                     return
             else:

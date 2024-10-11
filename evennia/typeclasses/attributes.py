@@ -808,6 +808,15 @@ class IAttributeBackend:
         for tup in args:
             if not is_iter(tup) or len(tup) < 2:
                 raise RuntimeError("batch_add requires iterables as arguments (got %r)." % tup)
+
+            # If last attribute is dict, use that as kwargs
+            if isinstance(tup[-1], dict):
+                specific_kwargs = tup[-1]
+                tup = tup[:-1]
+                actual_strattr = specific_kwargs.get("strattr", False)
+            else:
+                actual_strattr = strattr
+
             ntup = len(tup)
             keystr = str(tup[0]).strip().lower()
             new_value = tup[1]
@@ -819,10 +828,10 @@ class IAttributeBackend:
             if attr_objs:
                 attr_obj = attr_objs[0]
                 # update an existing attribute object
-                self.do_batch_update_attribute(attr_obj, category, lockstring, new_value, strattr)
+                self.do_batch_update_attribute(attr_obj, category, lockstring, new_value, actual_strattr)
             else:
                 new_attr = self.do_create_attribute(
-                    keystr, category, lockstring, new_value, strvalue=strattr
+                    keystr, category, lockstring, new_value, strvalue=actual_strattr
                 )
                 new_attrobjs.append(new_attr)
         if new_attrobjs:
@@ -1470,7 +1479,7 @@ class DbHolder:
 # Nick templating
 #
 
-"""
+r"""
 This supports the use of replacement templates in nicks:
 
 This happens in two steps:

@@ -1060,12 +1060,12 @@ class EvMenu:
             debugtxt = (
                 "|yMENU DEBUG properties ... |n\n"
                 + "\n".join(
-                    "|y *|n {}: {}".format(key, crop(to_str(val, force_string=True), width=50))
+                    "|y *|n {}: {}".format(key, crop(to_str(val), width=50))
                     for key, val in sorted(props.items())
                 )
                 + "\n |yLOCAL VARS:|n\n"
                 + "\n".join(
-                    "|y *|n {}: {}".format(key, crop(to_str(val, force_string=True), width=50))
+                    "|y *|n {}: {}".format(key, crop(to_str(val), width=50))
                     for key, val in sorted(local.items())
                 )
                 + "\n |y... END MENU DEBUG|n"

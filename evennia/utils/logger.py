@@ -45,7 +45,8 @@ def _log(msg, logfunc, prefix="", **kwargs):
             for line in msg.splitlines():
                 logfunc("{line}", prefix=prefix, line=line)
         except Exception as err:
-            log.error("Log failure: {err}", err=err)
+            #log.error("Log failure: {err}", err=err)
+            pass
 
 
 # log call functions (each has legacy aliases)
@@ -359,9 +360,12 @@ class WeeklyLogFile(logfile.DailyLogFile):
         Write data to log file
 
         """
-        logfile.BaseLogFile.write(self, data)
-        self.lastDate = max(self.lastDate, self.toDate())
-        self.size += len(data)
+        try:
+            logfile.BaseLogFile.write(self, data)
+            self.lastDate = max(self.lastDate, self.toDate())
+            self.size += len(data)
+        except:
+            pass
 
 
 # Arbitrary file logger

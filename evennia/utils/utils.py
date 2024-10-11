@@ -2322,7 +2322,9 @@ def m_len(target, use_display_len=False):
         return display_len(ANSI_PARSER.strip_mxp(target)) if use_display_len else len(ANSI_PARSER.strip_mxp(target))
     return display_len(target) if use_display_len else len(target)
 
-
+ambigious_wide = {"╭", "╮", "─", "│", "□",
+                  "╰", "╯", "┴", "┬", "├",
+                  "┤", "■", '×', '○'}
 def display_len(target):
     """
     Calculate the 'visible width' of text. This is not necessarily the same as the
@@ -2345,7 +2347,8 @@ def display_len(target):
         target = ANSI_PARSER.strip_mxp(target)
         target = ANSI_PARSER.parse_ansi(target, strip_ansi=True)
         extra_wide = ("F", "W")
-        return sum(2 if east_asian_width(char) in extra_wide else 1 for char in target)
+        return sum(2 if east_asian_width(char) in extra_wide or
+                        (east_asian_width(char) == "A" and char in ambigious_wide) else 1 for char in target)
     else:
         return len(target)
 

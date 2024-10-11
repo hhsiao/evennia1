@@ -700,7 +700,7 @@ class DefaultObject(ObjectDB, metaclass=TypeclassBase):
             the user), this should return `None`.
 
         """
-        
+
         if kwargs.get("quiet"):
             # don't care about no/multi-match errors, just return list of whatever we have
             return list(results)
@@ -871,7 +871,7 @@ class DefaultObject(ObjectDB, metaclass=TypeclassBase):
         if is_stacked:
             # we have a stacked result, return it immediately (a list)
             return results
-        
+
         # handle the end (unstacked) results, returning a single object, a list or None
         return self.handle_search_results(searchdata, results, **input_kwargs)
 
@@ -2285,7 +2285,7 @@ class DefaultObject(ObjectDB, metaclass=TypeclassBase):
         if msg:
             string = msg
         else:
-            string = "{object} is leaving {origin}, heading for {destination}."
+            string = _("{object} is leaving {origin}, heading for {destination}.")
 
         location = self.location
         exits = [

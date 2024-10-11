@@ -245,7 +245,8 @@ class CmdNick(COMMAND_DEFAULT_CLASS):
                 for nick in nicks:
                     __, __, nick, repl = nick.value
                     if nick.startswith(self.lhs):
-                        strings.append(_("{nicktype.capitalize()}-nick: '{nick}' -> '{repl}'").format(nicktype=nicktype, nick=nick, repl=repl))
+                        nicktype_capitalize = nicktype.capitalize()
+                        strings.append(_("{nicktype_capitalize}-nick: '{nick}' -> '{repl}'").format(nicktype_capitalize=nicktype_capitalize, nick=nick, repl=repl))
             if strings:
                 caller.msg("\n".join(strings))
             else:
@@ -266,7 +267,8 @@ class CmdNick(COMMAND_DEFAULT_CLASS):
                 for nick in nicks:
                     __, __, nick, repl = nick.value
                     if nick.startswith(self.lhs):
-                        strings.append(_("{nicktype.capitalize()}-nick: '{nick}' -> '{repl}'").format(nicktype=nicktype, nick=nick, repl=repl))
+                        nicktype_capitalize = nicktype.capitalize()
+                        strings.append(_("{nicktype_capitalize}-nick: '{nick}' -> '{repl}'").format(nicktype_capitalize=nicktype_capitalize, nick=nick, repl=repl))
             if strings:
                 caller.msg("\n".join(strings))
             else:
@@ -287,7 +289,8 @@ class CmdNick(COMMAND_DEFAULT_CLASS):
                 for nick in nicks:
                     __, __, nick, repl = nick.value
                     if nick.startswith(self.lhs):
-                        strings.append(_("{nicktype.capitalize()}-nick: '{nick}' -> '{repl}'").format(nicktype=nicktype, nick=nick, repl=repl))
+                        nicktype_capitalize = nicktype.capitalize()
+                        strings.append(_("{nicktype_capitalize}-nick: '{nick}' -> '{repl}'").format(nicktype_capitalize=nicktype_capitalize, nick=nick, repl=repl))
             if strings:
                 caller.msg("\n".join(strings))
             else:
@@ -311,7 +314,8 @@ class CmdNick(COMMAND_DEFAULT_CLASS):
         errstring = ""
         string = ""
         for nicktype in nicktypes:
-            nicktypestr = _("{nicktype.capitalize()}-nick").format(nicktype=nicktype)
+            nicktype_capitalize = nicktype.capitalize()
+            nicktypestr = _("{nicktype_capitalize}-nick").format(nicktype_capitalize=nicktype_capitalize)
             old_nickstring = None
             old_replstring = None
 
@@ -323,7 +327,8 @@ class CmdNick(COMMAND_DEFAULT_CLASS):
                 errstring = ""
                 if oldnick:
                     if replstring == old_replstring:
-                        string += _("\nIdentical {nicktypestr.lower()} already set.").format(nicktypestr=nicktypestr)
+                        nicktypestr_lower = nicktypestr.lower()
+                        string += _("\nIdentical {nicktypestr_lower} already set.").format(nicktypestr_lower=nicktypestr_lower)
                     else:
                         string += _("\n{nicktypestr} '|w{old_nickstring}|n' updated to map to '|w{replstring}|n'.").format(nicktypestr=nicktypestr, old_nickstring=old_nickstring, replstring=replstring)
                 else:
@@ -598,13 +603,14 @@ class CmdGive(NumberedTargetCommand):
                 moved.append(obj)
                 # Call the object's at_give() method.
                 obj.at_give(caller, target)
-
+        target_display_name = target.get_display_name(caller)
+        caller_display_name = caller.get_display_name(target)
         if not moved:
-            caller.msg(_("You could not give that to {target.get_display_name(caller)}.").format(target=target, caller=caller))
+            caller.msg(_("You could not give that to {target_display_name}.").format(target_display_name=target_display_name))
         else:
             obj_name = to_give[0].get_numbered_name(len(moved), caller, return_string=True)
-            caller.msg(_("You give {obj_name} to {target.get_display_name(caller)}.").format(obj_name=obj_name, target=target, caller=caller))
-            target.msg(_("{caller.get_display_name(target)} gives you {obj_name}.").format(caller=caller, target=target, obj_name=obj_name))
+            caller.msg(_("You give {obj_name} to {target_display_name}.").format(obj_name=obj_name, target_display_name=target_display_name))
+            target.msg(_("{caller_display_name} gives you {obj_name}.").format(caller_display_name=caller_display_name, obj_name=obj_name))
 
 
 class CmdSetDesc(COMMAND_DEFAULT_CLASS):

@@ -67,7 +67,7 @@ _DEFAULT_WIDTH = settings.CLIENT_DEFAULT_WIDTH
 # -------------------------------------------------------------
 
 _HELP_TEXT = _(
-    f"""
+    _("""
  <txt>  - any non-command is appended to the end of the buffer.
  :  <l> - view buffer or only line(s) <l>
  :: <l> - raw-view buffer or only line(s) <l>
@@ -106,7 +106,7 @@ _HELP_TEXT = _(
  :fd <l>    - de-indent entire buffer or line <l>
 
  :echo - turn echoing of the input on/off (helpful for some clients)
-"""
+""").format(_DEFAULT_WIDTH=_DEFAULT_WIDTH)
 )
 
 _HELP_LEGEND = _(
