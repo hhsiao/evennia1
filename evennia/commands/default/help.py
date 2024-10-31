@@ -22,13 +22,7 @@ from evennia.locks.lockhandler import LockException
 from evennia.utils import create, evmore
 from evennia.utils.ansi import ANSIString
 from evennia.utils.eveditor import EvEditor
-from evennia.utils.utils import (
-    class_from_module,
-    dedent,
-    format_grid,
-    inherits_from,
-    pad,
-)
+from evennia.utils.utils import class_from_module, dedent, format_grid, inherits_from, pad
 
 CMD_IGNORE_PREFIXES = settings.CMD_IGNORE_PREFIXES
 COMMAND_DEFAULT_CLASS = class_from_module(settings.COMMAND_DEFAULT_CLASS)
@@ -479,6 +473,11 @@ class CmdHelp(COMMAND_DEFAULT_CLASS):
             tuple: A tuple (match, suggestions).
 
         """
+        def strip_prefix(query):
+            if query and query[0] in settings.CMD_IGNORE_PREFIXES:
+                return query[1:]
+            return query
+
         if not search_fields:
             # lunr search fields/boosts
             search_fields = [
@@ -489,6 +488,7 @@ class CmdHelp(COMMAND_DEFAULT_CLASS):
                 {"field_name": "tags", "boost": 1},  # tags are not used by default
             ]
         match, suggestions = None, None
+        base_query = strip_prefix(query)
         for match_query in (query, f"{query}*"):
             # We first do an exact word-match followed by a start-by query. The
             # return of this will either be a HelpCategory, a Command or a
@@ -496,9 +496,28 @@ class CmdHelp(COMMAND_DEFAULT_CLASS):
             matches, suggestions = help_search_with_index(
                 match_query, entries, suggestion_maxnum=self.suggestion_maxnum, fields=search_fields
             )
+            # Move an exact match (including aliases) to the front of the list, treating a prefixed
+            # and non-prefixed command as the same thing
+            for m in matches[:]:
+                aliases = [m.key]
+                if not isinstance(m, HelpCategory):
+                    # Aliases for help created with 'sethelp' is an AliasHandler
+                    aliases += m.aliases if isinstance(m.aliases, list) else m.aliases.all()
+                if base_query in [strip_prefix(alias) for alias in aliases]:
+                    matches.remove(m)
+                    matches.insert(0, m)
+                    break
             if matches:
                 match = matches[0]
                 break
+        if match:
+            # Move an exact suggestion match to the front of the list
+            for s in suggestions[:]:
+                if base_query == strip_prefix(s):
+                    suggestions.remove(s)
+                    suggestions.insert(0, s)
+                    break
+
         return match, suggestions
 
     def parse(self):
@@ -721,7 +740,7 @@ class CmdHelp(COMMAND_DEFAULT_CLASS):
 
                     if not fuzzy_match:
                         # no match found - give up
-                        checked_topic = topic + f"/{subtopic_query}"
+                        checked_topic = topic + f"{self.subtopic_separator_char}{subtopic_query}"
                         output = self.format_help_entry(
                             topic=topic,
                             help_text=_("No help entry found for '{checked_topic}'").format(checked_topic=checked_topic),
@@ -736,7 +755,7 @@ class CmdHelp(COMMAND_DEFAULT_CLASS):
                 subtopic_map = subtopic_map.pop(subtopic_query)
                 subtopic_index = [subtopic for subtopic in subtopic_map if subtopic is not None and subtopic != "__settings__"]
                 # keep stepping down into the tree, append path to show position
-                topic = topic + f"/{subtopic_query}"
+                topic = topic + f"{self.subtopic_separator_char}{subtopic_query}"
 
             # we reached the bottom of the topic tree
             help_text = subtopic_map[None]

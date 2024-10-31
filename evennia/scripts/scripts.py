@@ -423,7 +423,12 @@ class ScriptBase(ScriptDB, metaclass=TypeclassBase):
             updates = []
             if not cdict.get("key"):
                 if not self.db_key:
-                    self.db_key = "#%i" % self.dbid
+                    if hasattr(self, "key"):
+                        # take key from the object typeclass
+                        self.db_key = self.key
+                    else:
+                        # no key set anywhere, use class+dbid as key
+                        self.db_key = f"{self.__class__.__name__}(#{self.dbid})"
                     updates.append("db_key")
             elif self.db_key != cdict["key"]:
                 self.db_key = cdict["key"]
