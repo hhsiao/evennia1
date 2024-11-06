@@ -2324,7 +2324,8 @@ def m_len(target, use_display_len=False):
 
 ambigious_wide = {"╭", "╮", "─", "│", "□",
                   "╰", "╯", "┴", "┬", "├",
-                  "┤", "■", '×', '○'}
+                  "┤", "■", '×', '○', '↓',
+                  '↔', '←', '→', '↑'}
 def display_len(target):
     """
     Calculate the 'visible width' of text. This is not necessarily the same as the
