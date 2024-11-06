@@ -61,8 +61,8 @@ _LBR = ANSIString("\n")
 
 # text
 
-_DISPLAY = """{text}
-|n(|wPage|n [{pageno}/{pagemax}] |wn|next|n || |wp|nrevious || |wt|nop || |we|nnd || |wq|nuit)"""
+_DISPLAY = _("""{text}
+|n(|wPage|n [{pageno}/{pagemax}] |wn|next|n || |wp|nrevious || |wt|nop || |we|nnd || |wq|nuit)""")
 
 
 class CmdMore(Command):
