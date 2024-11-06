@@ -585,7 +585,7 @@ class DefaultChannel(ChannelDB, metaclass=TypeclassBase):
         """
         user.nicks.remove(alias, category="channel", **kwargs)
         msg_nick_pattern = cls.channel_msg_nick_pattern.format(alias=alias)
-        user.nicks.remove(msg_nick_pattern, category="inputline", **kwargs)
+        user.nicks.remove(msg_nick_pattern, category="channel", **kwargs)
 
     def at_pre_msg(self, message, **kwargs):
         """
@@ -652,12 +652,10 @@ class DefaultChannel(ChannelDB, metaclass=TypeclassBase):
 
         for receiver in receivers:
             # send to each individual subscriber
-
             try:
                 recv_message = receiver.at_pre_channel_msg(message, self, **send_kwargs)
                 if recv_message in (None, False):
                     return
-
                 receiver.channel_msg(recv_message, self, **send_kwargs)
 
                 receiver.at_post_channel_msg(recv_message, self, **send_kwargs)
