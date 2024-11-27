@@ -129,7 +129,6 @@ class AccountSessionHandler(object):
         """
         return len(self.get())
 
-
 class CharactersHandler:
     """
     A simple Handler that lives on DefaultAccount as .characters via @lazy_property used to

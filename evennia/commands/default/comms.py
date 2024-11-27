@@ -50,7 +50,7 @@ class CmdChannel(COMMAND_DEFAULT_CLASS):
 
     Usage:
       channel channelname <msg>
-      channel channel name = <msg>
+      channel channelname = <msg>
       channel        (show all subscription)
       channel/all    (show available channels)
       channel/alias channelname = alias[;alias...]
